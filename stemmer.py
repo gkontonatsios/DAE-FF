@@ -16,7 +16,7 @@ class StemTokenizer(object):
 
         """
         Takes as an input a document and returns a list of stems corresponding to the
-        constituent words of that document
+        constituent words of that document.
 
         Filters out:
             1) Words whose pos_tag is contained in the stop_pos_tags list
