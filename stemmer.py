@@ -1,9 +1,6 @@
 from nltk.stem.porter import *
 from nltk import word_tokenize, pos_tag
 from nltk.corpus import stopwords
-
-
-import time
 from console_progressbar import ProgressBar
 
 
