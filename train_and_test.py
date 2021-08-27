@@ -8,6 +8,8 @@ from dae_model import DAE
 from data_utils import load_bow_vectors_and_labels, normalise
 from ff_model import FF
 
+import argparse
+
 
 def train_and_evaluate_dae_ff(
     input_data_file,
@@ -282,8 +284,13 @@ def train_and_evaluate_dae_ff(
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--infile", default="sample_data/bpa.tsv", type=str)
+
+    args = parser.parse_args()
+
     train_and_evaluate_dae_ff(
-        input_data_file="sample_data/sample_file copy.tsv",
+        input_data_file=args.infile,
         num_dae_epochs=150,
         num_ff_epochs=100,
         drop_out=0.7,
