@@ -1,8 +1,12 @@
 console-progressbar==1.1.2
-Keras==2.0.9
+Keras~=2.3.1
 nltk==3.6.2
 numpy==1.18.5
 pandas==1.1.5
 scikit-learn==0.24.2
 scipy==1.5.4
 tensorflow==1.13.2
+dataclasses~=0.8
+tqdm~=4.61.0
+sklearn~=0.0
+biopython
