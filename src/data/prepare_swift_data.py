@@ -1,4 +1,3 @@
-import json
 import pandas as pd
 from Bio import Entrez
 from Bio.Entrez import efetch
@@ -7,7 +6,7 @@ from tqdm import tqdm
 Entrez.email = "Your.Name@example.org"
 
 
-def get_from_pubmed(df, text_column :str = 'abstracts', labels_column: str = 'labels'):
+def get_from_pubmed(df, text_column: str = 'abstracts', labels_column: str = 'labels'):
     pubmed_id_column = 'PMID'
 
     df[labels_column] = 1
@@ -31,7 +30,7 @@ def get_from_pubmed(df, text_column :str = 'abstracts', labels_column: str = 'la
     return df[[text_column, labels_column]]
 
 
-def prepare_fluoride_dataset(df:pd.DataFrame, text_column :str = 'abstracts', labels_column: str = 'labels'):
+def prepare_fluoride_dataset(df: pd.DataFrame, text_column: str = 'abstracts', labels_column: str = 'labels'):
     """This function creates a dataframe in a shape that is later on accepted by the DAE model.
 
     :param df:
@@ -52,10 +51,10 @@ if __name__ == '__main__':
     output_folder = "../../data/processed/"
 
     datasets = {
-        "Fluoride.tsv" : prepare_fluoride_dataset,
-        "BPA.tsv" : get_from_pubmed,
+        "Fluoride.tsv": prepare_fluoride_dataset,
+        "BPA.tsv": get_from_pubmed,
         "Transgenerational.tsv": get_from_pubmed,
-        "PFOS-PFOA.tsv" : get_from_pubmed,
+        "PFOS-PFOA.tsv": get_from_pubmed,
     }
 
     for filename, parsing_function in datasets.items():
