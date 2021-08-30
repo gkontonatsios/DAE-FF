@@ -1,7 +1,11 @@
+import datetime
+
 import keras
 import numpy as np
+import pandas as pd
 from keras.optimizers import SGD
 from sklearn.model_selection import StratifiedShuffleSplit
+import os
 
 from classification import prioritise_and_evaluate
 from dae_model import DAE
@@ -282,14 +286,17 @@ def train_and_evaluate_dae_ff(
         print("Average WSS@95:", np.asarray(wss_95_all_folds).mean())
         print("Average WSS@100:", np.asarray(wss_100_all_folds).mean())
 
+    return np.asarray(wss_95_all_folds).mean(), np.asarray(wss_100_all_folds).mean()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--infile", default="sample_data/bpa.tsv", type=str)
+    parser.add_argument("--results_file", default="data/results_summary.tsv", type=str)
 
     args = parser.parse_args()
 
-    train_and_evaluate_dae_ff(
+    wss95, wss100 = train_and_evaluate_dae_ff(
         input_data_file=args.infile,
         num_dae_epochs=150,
         num_ff_epochs=100,
@@ -297,3 +304,17 @@ if __name__ == "__main__":
         dae_minibatch=32,
         ff_minibatch=128,
     )
+
+    result_dict = {args.infile : {
+        "wss95" : wss95,
+        "wss100": wss100,
+        "date" : datetime.datetime.now()
+    }}
+
+    if os.path.isfile(args.results_file):
+        df = pd.read_csv(args.results_file, sep='\t')
+        df = df.append(pd.DataFrame.from_dict(result_dict).transpose().reset_index(), ignore_index=True)
+    else:
+        df =pd.DataFrame.from_dict(result_dict).transpose().reset_index()
+
+    df.to_csv(args.results_file, sep='\t', index=False)
