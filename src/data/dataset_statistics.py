@@ -55,4 +55,4 @@ if __name__ == "__main__":
         total_statistics[dataset_name] = dataset_statistics(df=df)
 
     results = pd.DataFrame.from_dict(total_statistics).transpose()
-    results.sort_index().to_csv("../../data/statistics.csv")
+    results.sort_index().to_csv("../../data/statistics.tsv", sep='\t')
