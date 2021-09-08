@@ -10,3 +10,4 @@ dataclasses~=0.8
 tqdm~=4.61.0
 sklearn~=0.0
 biopython
+fasttext~=0.9.2
