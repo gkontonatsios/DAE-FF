@@ -10,8 +10,7 @@ This code was tested with Python 3.6 on Ubuntu 18.04 and Windows 10.
 % pip install -r requirements.txt
 ```
 
-
-If you plan to run the code on a **GPU** install packages using conda:
+If you plan to run the code on a **GPU** install packages using [conda](https://anaconda.org/anaconda/tensorflow-gpu):
 
 ```bash
 % conda install -c anaconda tensorflow-gpu==1.13.1 scikit-learn pandas nltk 
