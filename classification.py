@@ -4,7 +4,7 @@ from operator import itemgetter
 from sklearn.svm import LinearSVC
 
 from evaluation import compute_wss
-
+import time
 
 def prioritise_and_evaluate(X_train, y_train, X_test, y_test):
     """
@@ -27,7 +27,10 @@ def prioritise_and_evaluate(X_train, y_train, X_test, y_test):
         C=0.000001,
     )
     # train SVM classifier
+    start = time.time()
     linear_svc.fit(X_train, y_train)
+    stop = time.time()
+    svm_time = stop - start
 
     # get predictions of test documents
     predictions = linear_svc.predict(X_test)
@@ -44,7 +47,7 @@ def prioritise_and_evaluate(X_train, y_train, X_test, y_test):
     )
 
     # evaluate ranking in terms of work saved over 95% and 100% recall
-    wss_95, wss_100 = compute_wss(
+    wss_95, wss_100, precision_95 = compute_wss(
         indexes_with_predicted_distances=test_indexes_with_distances, y_test=y_test
     )
-    return wss_95, wss_100
+    return wss_95, wss_100, precision_95, svm_time

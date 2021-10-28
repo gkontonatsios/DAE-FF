@@ -1,6 +1,6 @@
 import numpy as np
 
-
+precision = 0
 def rank_of_last_pos_doc_at_x_recall(
     indexes_with_predicted_distances, y_test, recall_threshold
 ):
@@ -15,29 +15,36 @@ def rank_of_last_pos_doc_at_x_recall(
     total_number_of_positives = dict(zip(unique, counts))[1]
 
     tp = 0
+    tn = 0
     for rank, index in enumerate(indexes_with_predicted_distances):
         # if document at position = index is positive (i.e., equal to 1.0) then
         # increment the number of true positives
         if y_test[index] == 1.0:
             tp += 1
+        else:
+            tn += 1
         recall = tp / total_number_of_positives
         if recall >= recall_threshold:
             last_pos_doc = rank + 1
-            return last_pos_doc
+
+            precision = tp / (tp + tn)
+            print(f"precision at {recall_threshold} recall = {precision}")
+            return last_pos_doc, precision
 
 
 def compute_wss(indexes_with_predicted_distances, y_test):
+    print(indexes_with_predicted_distances, y_test)
     # number of documents
     N = len(y_test)
 
     # position of last positive document so that recall is 100%
-    last_rel_doc = rank_of_last_pos_doc_at_x_recall(
+    last_rel_doc, _ = rank_of_last_pos_doc_at_x_recall(
         indexes_with_predicted_distances=indexes_with_predicted_distances,
         y_test=y_test,
         recall_threshold=1.0,
     )
     # position of last positive document so that recall is 95%
-    last_rel_doc_95 = rank_of_last_pos_doc_at_x_recall(
+    last_rel_doc_95, precision = rank_of_last_pos_doc_at_x_recall(
         indexes_with_predicted_distances=indexes_with_predicted_distances,
         y_test=y_test,
         recall_threshold=0.95,
@@ -46,4 +53,5 @@ def compute_wss(indexes_with_predicted_distances, y_test):
     wss_100 = float(N - last_rel_doc) / float(N)
     wss_95 = (float(N - last_rel_doc_95) / float(N)) - 0.05
 
-    return wss_95, wss_100
+    print(f"precision at 95 recall = {precision}")
+    return wss_95, wss_100, precision

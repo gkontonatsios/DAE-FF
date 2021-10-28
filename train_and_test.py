@@ -1,5 +1,5 @@
 import datetime
-
+import time
 import keras
 import numpy as np
 import pandas as pd
@@ -13,6 +13,9 @@ from data_utils import load_bow_vectors_and_labels, normalise
 from ff_model import FF
 
 import argparse
+# from metrics import WorkSavedOverSamplingAtRecall
+
+total_time = 0
 
 
 def train_and_evaluate_dae_ff(
@@ -61,6 +64,7 @@ def train_and_evaluate_dae_ff(
 
     dae_1.compile(optimizer="adadelta", loss="binary_crossentropy")
 
+    start = time.time()
     dae_1.fit(
         X_noisy,
         X,
@@ -68,6 +72,8 @@ def train_and_evaluate_dae_ff(
         batch_size=int(dae_minibatch),
         shuffle=True,
     )
+    stop = time.time()
+    total_time = stop - start
 
     X_denoised_first = dae_1.predict(X)
     # =======================End First DAE Component=======================
@@ -81,6 +87,7 @@ def train_and_evaluate_dae_ff(
 
     X_noisy = X + 0.5 * np.random.normal(loc=0.0, scale=1.0, size=X.shape)
 
+    start = time.time()
     dae_2.fit(
         X_noisy,
         X,
@@ -88,6 +95,8 @@ def train_and_evaluate_dae_ff(
         batch_size=int(dae_minibatch),
         shuffle=True,
     )
+    stop = time.time()
+    total_time += stop - start
 
     X_denoised_second = dae_2.predict(X)
     # =======================Second DAE Component=======================
@@ -101,6 +110,7 @@ def train_and_evaluate_dae_ff(
 
     X_noisy = X + 0.5 * np.random.normal(loc=0.0, scale=1.0, size=X.shape)
 
+    start = time.time()
     dae_3.fit(
         X_noisy,
         X,
@@ -108,6 +118,12 @@ def train_and_evaluate_dae_ff(
         batch_size=int(dae_minibatch),
         shuffle=True,
     )
+    stop = time.time()
+    total_time += stop - start
+
+    results_dict = {}
+
+    results_dict['DAE-train-time'] = total_time
 
     X_denoised_third = dae_3.predict(X)
     # =======================Third DAE Component=======================
@@ -127,12 +143,14 @@ def train_and_evaluate_dae_ff(
     wss_100_all_folds = []
 
     seeds = [60, 55, 98, 27, 36, 44, 72, 67, 3, 42]
-
+    ff_times = []
+    svm_times = []
+    precision_95_list = []
     # perform stratified $10\times2$ cross-validation
     # use same seeds across all baselines
     for seed in seeds:
         sss = StratifiedShuffleSplit(n_splits=1, test_size=(1 - 0.5), random_state=seed)
-
+        seed_time = 0
         for train_indexes, test_indexes in sss.split(X, y):
             # split into training and test subsets (first DAE projection)
             X_denoised_first_training, X_denoised_first_test = (
@@ -191,6 +209,7 @@ def train_and_evaluate_dae_ff(
                 loss="categorical_crossentropy", optimizer=sgd, metrics=["accuracy"]
             )
 
+            start = time.time()
             # train feed forward model
             history = ff_model.fit(
                 [
@@ -203,6 +222,9 @@ def train_and_evaluate_dae_ff(
                 epochs=int(num_ff_epochs),
                 verbose=1,
             )
+            stop = time.time()
+            seed_time = stop - start
+            ff_times.append(seed_time)
 
             # weights of branch 1
             w_b1 = ff.branch1.layers[0].get_weights()[0]
@@ -274,19 +296,31 @@ def train_and_evaluate_dae_ff(
             x_test_projected = x_test_projected.astype("float32")
 
             # evaluate model according to wss@95%recall and wss@100%recall
-            wss_95, wss_100 = prioritise_and_evaluate(
+            wss_95, wss_100, precision_95, svm_time = prioritise_and_evaluate(
                 X_train=x_train_projected,
                 y_train=y_train,
                 X_test=x_test_projected,
                 y_test=y_test,
             )
-
+            svm_times.append(svm_time)
+            precision_95_list.append(precision_95)
             wss_95_all_folds.append(wss_95)
             wss_100_all_folds.append(wss_100)
         print("Average WSS@95:", np.asarray(wss_95_all_folds).mean())
         print("Average WSS@100:", np.asarray(wss_100_all_folds).mean())
 
-    return np.asarray(wss_95_all_folds).mean(), np.asarray(wss_100_all_folds).mean()
+    results_dict["wss_95_raw"] = wss_95_all_folds
+    results_dict["svm_times"] = svm_times
+    results_dict["ff_times"] = ff_times
+    print('times', np.mean(ff_times), np.mean(svm_times), results_dict['DAE-train-time'])
+    results_dict["avg_train_time"] = np.mean(ff_times) + np.mean(svm_times) + results_dict['DAE-train-time']
+    results_dict["wss_95"] = np.asarray(wss_95_all_folds).mean()
+    results_dict["wss_100"] = np.asarray(wss_100_all_folds).mean()
+    results_dict["precision_95"] = precision_95_list
+    results_dict["avg_precision_95"] = np.mean(precision_95_list)
+
+    # return np.asarray(wss_95_all_folds).mean(), np.asarray(wss_100_all_folds).mean()
+    return results_dict
 
 
 if __name__ == "__main__":

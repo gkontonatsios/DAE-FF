@@ -10,6 +10,7 @@ import pandas as pd
 from sklearn.metrics import f1_score, precision_score, recall_score
 from sklearn.model_selection import StratifiedShuffleSplit
 import os
+import time
 
 import fasttext
 from typing import List, Tuple
@@ -17,6 +18,20 @@ import argparse
 
 from evaluation import compute_wss
 import random
+
+import spacy
+
+
+nlp = spacy.load("en_core_web_sm",
+                 disable=[
+                     "ner",
+                     "tok2vec",
+                     "tagger",
+                     "parser",
+                     "attribute_ruler",
+                     "lemmatizer",
+                 ],
+                 )
 
 
 def undersample(X: np.array, y: np.array) -> Tuple[np.array, np.array]:
@@ -40,6 +55,14 @@ def undersample(X: np.array, y: np.array) -> Tuple[np.array, np.array]:
     return X[undersampled_indexes], y[undersampled_indexes]
 
 
+def preprocess_text(text: str) -> str:
+    """Preprocesses a custom text field using spacy tokenizer and removing
+    stopwords. Preprocessed text is returned as a List of tokenized strings.
+    """
+    preprocessed = nlp(text)
+    return " ".join(token.text for token in preprocessed if not token.is_stop)
+
+
 def write_temp_fasttext_train_file(
     X: List[str], y: List[str], outfile="../data/train-tmp.data"
 ):
@@ -61,6 +84,7 @@ def train_fasttext(
 
     write_temp_fasttext_train_file(X=X, y=y, outfile=TRAIN_FILEPATH)
 
+    start = time.time()
     model = fasttext.train_supervised(
         input=TRAIN_FILEPATH,
         lr=lr,
@@ -68,10 +92,12 @@ def train_fasttext(
         wordNgrams=wordNgrams,
         dim=dim,
         loss=loss,
-        pretrainedVectors=VECTORS_FILEPATH,
+        # pretrainedVectors=VECTORS_FILEPATH,
     )
-
-    return model
+    stop = time.time()
+    total_time = stop - start
+    print(f"total_time: {total_time}")
+    return model, total_time
 
 
 def train_and_evaluate_fasttext(
@@ -100,23 +126,29 @@ def train_and_evaluate_fasttext(
     :param ff_minibatch: size of minibatch used for the Feed Forward neural network
     """
     df = pd.read_csv(input_data_file, delimiter="\t")
+    df['Title'] = df['Title'].fillna("empty")
+    df['Abstract'] = df['Abstract'].fillna("empty")
 
     # get abstracts column into a list
-    X = list(df["abstracts"])
+    # X = list(df['Title'].str.cat(df['Abstract'], sep=" "))
+    X = list(df['Abstract'])
+    # X = [preprocess_text(elem) for elem in X]
     X = [re.sub(r"[\W]+", " ", elem) for elem in X]
     X = [re.sub(r"[\n\r\t ]+", " ", elem) for elem in X]
     X = [elem.lower() for elem in X]
     X = np.asarray(X)
+    print(nlp)
 
     # get labels column into a list
-    y = list(df["labels"])
+    y = list(df["Label"])
     y = np.asarray(y)
 
     wss_95_all_folds = []
     wss_100_all_folds = []
+    precision_95_list = []
     precision = []
     recall = []
-
+    train_times = []
     results_dict = {}
 
     seeds = [60, 55, 98, 27, 36, 44, 72, 67, 3, 42]
@@ -136,7 +168,7 @@ def train_and_evaluate_fasttext(
             # split labels into training and test subsets
             y_train, y_test = y[train_indexes], y[test_indexes]
 
-            model = train_fasttext(X=X_train, y=y_train)
+            model, train_time = train_fasttext(X=X_train, y=y_train)
 
             y_pred = [model.predict(row) for row in X_test]
 
@@ -157,6 +189,7 @@ def train_and_evaluate_fasttext(
             f1 = f1_score(y_test, y_pred=predictions)
             precision.append(precision_score(y_test, y_pred=predictions))
             recall.append(recall_score(y_test, y_pred=predictions))
+            train_times.append(train_time)
 
             print(f"prec={precision}, recall={recall} f1={f1}")
 
@@ -177,23 +210,29 @@ def train_and_evaluate_fasttext(
             )
 
             # evaluate ranking in terms of work saved over 95% and 100% recall
-            wss_95, wss_100 = compute_wss(
+            wss_95, wss_100, precision_95 = compute_wss(
                 indexes_with_predicted_distances=test_indexes_with_distances,
                 y_test=y_test,
             )
 
-
+            precision_95_list.append(precision_95)
             wss_95_all_folds.append(wss_95)
             wss_100_all_folds.append(wss_100)
         print("Average WSS@95:", np.asarray(wss_95_all_folds).mean())
         print("Average WSS@100:", np.asarray(wss_100_all_folds).mean())
 
+    results_dict["wss_95_raw"] = wss_95_all_folds
+    results_dict["train_time"] = train_times
+    results_dict["avg_train_time"] = np.mean(train_times)
     results_dict["wss_95"] = np.asarray(wss_95_all_folds).mean()
     results_dict["wss_100"] = np.asarray(wss_100_all_folds).mean()
     results_dict["precision"] = np.asarray(precision).mean()
     results_dict["recall"] = np.asarray(recall).mean()
+    results_dict["precision_95"] = precision_95_list
+    results_dict["avg_precision_95"] = np.mean(precision_95_list)
 
-    return np.asarray(wss_95_all_folds).mean(), np.asarray(wss_100_all_folds).mean()
+    # return np.asarray(wss_95_all_folds).mean(), np.asarray(wss_100_all_folds).mean()
+    return results_dict
 
 
 if __name__ == "__main__":
@@ -230,8 +269,4 @@ if __name__ == "__main__":
         df = pd.DataFrame.from_dict(result_dict).transpose().reset_index()
 
     df.drop_duplicates().to_csv(args.results_file, sep="\t", index=False)
-
-
-#fasttext embeddings
-# https://ftp.ncbi.nlm.nih.gov/pub/lu/Suppl/BioSentVec/BioWordVec_PubMed_MIMICIII_d200.vec.bin
 
