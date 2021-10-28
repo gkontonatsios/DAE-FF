@@ -13,6 +13,7 @@ from data_utils import load_bow_vectors_and_labels, normalise
 from ff_model import FF
 
 import argparse
+
 # from metrics import WorkSavedOverSamplingAtRecall
 
 total_time = 0
@@ -123,7 +124,7 @@ def train_and_evaluate_dae_ff(
 
     results_dict = {}
 
-    results_dict['DAE-train-time'] = total_time
+    results_dict["DAE-train-time"] = total_time
 
     X_denoised_third = dae_3.predict(X)
     # =======================Third DAE Component=======================
@@ -312,8 +313,12 @@ def train_and_evaluate_dae_ff(
     results_dict["wss_95_raw"] = wss_95_all_folds
     results_dict["svm_times"] = svm_times
     results_dict["ff_times"] = ff_times
-    print('times', np.mean(ff_times), np.mean(svm_times), results_dict['DAE-train-time'])
-    results_dict["avg_train_time"] = np.mean(ff_times) + np.mean(svm_times) + results_dict['DAE-train-time']
+    print(
+        "times", np.mean(ff_times), np.mean(svm_times), results_dict["DAE-train-time"]
+    )
+    results_dict["avg_train_time"] = (
+        np.mean(ff_times) + np.mean(svm_times) + results_dict["DAE-train-time"]
+    )
     results_dict["wss_95"] = np.asarray(wss_95_all_folds).mean()
     results_dict["wss_100"] = np.asarray(wss_100_all_folds).mean()
     results_dict["precision_95"] = precision_95_list
@@ -339,16 +344,17 @@ if __name__ == "__main__":
         ff_minibatch=128,
     )
 
-    result_dict = {args.infile : {
-        "wss95" : wss95,
-        "wss100": wss100,
-        "date" : datetime.datetime.now()
-    }}
+    result_dict = {
+        args.infile: {"wss95": wss95, "wss100": wss100, "date": datetime.datetime.now()}
+    }
 
     if os.path.isfile(args.results_file):
-        df = pd.read_csv(args.results_file, sep='\t')
-        df = df.append(pd.DataFrame.from_dict(result_dict).transpose().reset_index(), ignore_index=True)
+        df = pd.read_csv(args.results_file, sep="\t")
+        df = df.append(
+            pd.DataFrame.from_dict(result_dict).transpose().reset_index(),
+            ignore_index=True,
+        )
     else:
-        df =pd.DataFrame.from_dict(result_dict).transpose().reset_index()
+        df = pd.DataFrame.from_dict(result_dict).transpose().reset_index()
 
-    df.to_csv(args.results_file, sep='\t', index=False)
+    df.to_csv(args.results_file, sep="\t", index=False)

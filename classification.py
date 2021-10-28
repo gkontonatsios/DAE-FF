@@ -6,6 +6,7 @@ from sklearn.svm import LinearSVC
 from evaluation import compute_wss
 import time
 
+
 def prioritise_and_evaluate(X_train, y_train, X_test, y_test):
     """
     Trains an L2-regularised linear SVM classifier.

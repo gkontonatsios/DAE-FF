@@ -35,14 +35,14 @@ def load_bow_vectors_and_labels(input_data_file, max_features=10000, min_df=10):
     df = pd.read_csv(input_data_file, delimiter="\t")
 
     # get abstracts column into a list
-    df['Title'] = df['Title'].fillna("empty")
-    df['Abstract'] = df['Abstract'].fillna("empty")
+    df["Title"] = df["Title"].fillna("empty")
+    df["Abstract"] = df["Abstract"].fillna("empty")
 
-    raw_abstracts = list(df['Title'].str.cat(df['Abstract'], sep=" "))
-    raw_abstracts = list(df['Title'])
+    raw_abstracts = list(df["Title"].str.cat(df["Abstract"], sep=" "))
+    raw_abstracts = list(df["Title"])
 
     # get labels column into a list
-    y = list(df['Label'])
+    y = list(df["Label"])
 
     # Convert into bag-of-words. Filter out words based on max_feautres and min_df
     count_vectorizer = CountVectorizer(

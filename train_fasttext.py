@@ -22,16 +22,17 @@ import random
 import spacy
 
 
-nlp = spacy.load("en_core_web_sm",
-                 disable=[
-                     "ner",
-                     "tok2vec",
-                     "tagger",
-                     "parser",
-                     "attribute_ruler",
-                     "lemmatizer",
-                 ],
-                 )
+nlp = spacy.load(
+    "en_core_web_sm",
+    disable=[
+        "ner",
+        "tok2vec",
+        "tagger",
+        "parser",
+        "attribute_ruler",
+        "lemmatizer",
+    ],
+)
 
 
 def undersample(X: np.array, y: np.array) -> Tuple[np.array, np.array]:
@@ -72,15 +73,24 @@ def write_temp_fasttext_train_file(
 
 
 def train_fasttext(
-    X: List[str], y: List[str], lr=1.0, epoch=40, wordNgrams=7, dim=200, loss="hs", undersampling=False,
+    X: List[str],
+    y: List[str],
+    lr=1.0,
+    epoch=40,
+    wordNgrams=7,
+    dim=200,
+    loss="hs",
+    undersampling=False,
 ) -> fasttext.FastText._FastText:
-    VECTORS_FILEPATH: str = "../../data/embeddings/BioWordVec_PubMed_MIMICIII_d200.vec.bin"
+    VECTORS_FILEPATH: str = (
+        "../../data/embeddings/BioWordVec_PubMed_MIMICIII_d200.vec.bin"
+    )
     TRAIN_FILEPATH: str = "data/train.data"
 
     if undersampling:
-        print('before', X.shape, y.shape)
-        X, y= undersample(X=X, y=y)
-        print('after', X.shape, y.shape)
+        print("before", X.shape, y.shape)
+        X, y = undersample(X=X, y=y)
+        print("after", X.shape, y.shape)
 
     write_temp_fasttext_train_file(X=X, y=y, outfile=TRAIN_FILEPATH)
 
@@ -126,12 +136,12 @@ def train_and_evaluate_fasttext(
     :param ff_minibatch: size of minibatch used for the Feed Forward neural network
     """
     df = pd.read_csv(input_data_file, delimiter="\t")
-    df['Title'] = df['Title'].fillna("empty")
-    df['Abstract'] = df['Abstract'].fillna("empty")
+    df["Title"] = df["Title"].fillna("empty")
+    df["Abstract"] = df["Abstract"].fillna("empty")
 
     # get abstracts column into a list
     # X = list(df['Title'].str.cat(df['Abstract'], sep=" "))
-    X = list(df['Abstract'])
+    X = list(df["Abstract"])
     # X = [preprocess_text(elem) for elem in X]
     X = [re.sub(r"[\W]+", " ", elem) for elem in X]
     X = [re.sub(r"[\n\r\t ]+", " ", elem) for elem in X]
@@ -269,4 +279,3 @@ if __name__ == "__main__":
         df = pd.DataFrame.from_dict(result_dict).transpose().reset_index()
 
     df.drop_duplicates().to_csv(args.results_file, sep="\t", index=False)
-

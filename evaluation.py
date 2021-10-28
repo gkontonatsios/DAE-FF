@@ -1,6 +1,8 @@
 import numpy as np
 
 precision = 0
+
+
 def rank_of_last_pos_doc_at_x_recall(
     indexes_with_predicted_distances, y_test, recall_threshold
 ):

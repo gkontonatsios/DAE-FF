@@ -6,8 +6,8 @@ from tqdm import tqdm
 Entrez.email = "Your.Name@example.org"
 
 
-def get_from_pubmed(df, text_column: str = 'abstracts', labels_column: str = 'labels'):
-    pubmed_id_column = 'PMID'
+def get_from_pubmed(df, text_column: str = "abstracts", labels_column: str = "labels"):
+    pubmed_id_column = "PMID"
 
     df[labels_column] = 1
     df.loc[df["Status"] == "Excluded", labels_column] = 0
@@ -18,9 +18,7 @@ def get_from_pubmed(df, text_column: str = 'abstracts', labels_column: str = 'la
             handle = efetch(
                 db="pubmed", id=pubmed_id, retmode="text", rettype="abstract"
             )
-            df.loc[
-                df[pubmed_id_column] == pubmed_id, text_column
-            ] = handle.read()
+            df.loc[df[pubmed_id_column] == pubmed_id, text_column] = handle.read()
 
         except Exception as E:
             print(E, pubmed_id)
@@ -30,7 +28,9 @@ def get_from_pubmed(df, text_column: str = 'abstracts', labels_column: str = 'la
     return df[[text_column, labels_column]]
 
 
-def prepare_fluoride_dataset(df: pd.DataFrame, text_column: str = 'abstracts', labels_column: str = 'labels'):
+def prepare_fluoride_dataset(
+    df: pd.DataFrame, text_column: str = "abstracts", labels_column: str = "labels"
+):
     """This function creates a dataframe in a shape that is later on accepted by the DAE model.
 
     :param df:
@@ -38,15 +38,15 @@ def prepare_fluoride_dataset(df: pd.DataFrame, text_column: str = 'abstracts', l
     :param labels_column: contains numerized data from 'Included' column
     :return:
     """
-    df[text_column] = df['Title'].fillna("") + '.' + df['Abstract'].fillna("")
+    df[text_column] = df["Title"].fillna("") + "." + df["Abstract"].fillna("")
 
     df[labels_column] = 1
-    df.loc[df['Included'] == 'EXCLUDED', labels_column] = 0
+    df.loc[df["Included"] == "EXCLUDED", labels_column] = 0
 
     return df[[text_column, labels_column]]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     input_folder = "../../data/raw/SWIFT/"
     output_folder = "../../data/processed/"
 
@@ -62,6 +62,6 @@ if __name__ == '__main__':
 
         input_data = f"{input_folder}/{filename}"
         output_data = f"{output_folder}/{filename}"
-        df = pd.read_csv(input_data, sep='\t')
+        df = pd.read_csv(input_data, sep="\t")
         df = parsing_function(df)
-        df.to_csv(output_data, sep='\t', index=False)
+        df.to_csv(output_data, sep="\t", index=False)

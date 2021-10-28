@@ -2,13 +2,16 @@ import datetime
 import os
 import pandas as pd
 import random
+
 random.seed(1)
 import numpy as np
+
 np.random.seed(1)
 # import tensorflow as tf
 # tf.random.set_random_seed(1)
 
 from train_and_test import train_and_evaluate_dae_ff
+
 # from train_fasttext import train_and_evaluate_fasttext
 
 if __name__ == "__main__":
@@ -24,7 +27,7 @@ if __name__ == "__main__":
         if infile not in ["SkeletalMuscleRelaxants.tsv", "proton_beam.tsv"]:
             continue
 
-        if infile[-3:] != 'tsv':
+        if infile[-3:] != "tsv":
             continue
         single_file_dict = train_and_evaluate_dae_ff(
             input_data_file=f"{input_dir}/{infile}",
