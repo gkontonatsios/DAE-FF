@@ -1,26 +1,21 @@
+import argparse
 import datetime
-from operator import itemgetter
-
-import re
-from collections import OrderedDict
-
-import numpy as np
-import pandas as pd
-
-from sklearn.metrics import f1_score, precision_score, recall_score
-from sklearn.model_selection import StratifiedShuffleSplit
 import os
+import random
+import re
 import time
+from collections import OrderedDict
+from operator import itemgetter
+from typing import List, Tuple
 
 import fasttext
-from typing import List, Tuple
-import argparse
+import numpy as np
+import pandas as pd
+import spacy
+from sklearn.metrics import f1_score, precision_score, recall_score
+from sklearn.model_selection import StratifiedShuffleSplit
 
 from evaluation import compute_wss
-import random
-
-import spacy
-
 
 nlp = spacy.load(
     "en_core_web_sm",

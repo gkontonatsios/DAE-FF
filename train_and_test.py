@@ -1,18 +1,18 @@
+import argparse
 import datetime
+import os
 import time
+
 import keras
 import numpy as np
 import pandas as pd
 from keras.optimizers import SGD
 from sklearn.model_selection import StratifiedShuffleSplit
-import os
 
 from classification import prioritise_and_evaluate
 from dae_model import DAE
 from data_utils import load_bow_vectors_and_labels, normalise
 from ff_model import FF
-
-import argparse
 
 # from metrics import WorkSavedOverSamplingAtRecall
 

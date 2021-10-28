@@ -1,7 +1,8 @@
 import datetime
 import os
-import pandas as pd
 import random
+
+import pandas as pd
 
 random.seed(1)
 import numpy as np
